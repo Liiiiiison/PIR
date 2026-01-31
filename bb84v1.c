@@ -18,7 +18,7 @@ données du réseau */
 /* pour la gestion des erreurs */
 #include <errno.h>
 #include <time.h> 
-
+#include "TCP_channel.c"
 
 int nb_message =-1 ;
 
@@ -40,8 +40,7 @@ void generate_rand_bases(unsigned char * tab){
     }  
 } 
 
-void generate_states(unsigned short * tab_bit, unsigned char * tab_bases, unsigned int * tab_state){
-    
+void generate_states(unsigned short * tab_bit, unsigned char * tab_bases, unsigned int * tab_state){ 
     for (int i = 0; i < nb_message;i++){
         if (tab_bases[i] == '+'){
             if (tab_bit[i]){
@@ -55,6 +54,28 @@ void generate_states(unsigned short * tab_bit, unsigned char * tab_bases, unsign
             } else {
                 tab_state[i]= 45; 
             } 
+        } 
+    } 
+} 
+
+void decode_data(unsigned int * tab_state, unsigned char * tab_bases, unsigned short * tab_bit){ 
+    for (int i = 0; i < nb_message;i++){
+        if (tab_bases[i] == '+'){
+            if (tab_state[i]==0){
+                tab_bit[i] = 0;
+            } else if (tab_state[i]==90){
+                tab_bit[i]= 1; 
+            } else {
+                tab_bit[i]=1; //arbitraire
+            }
+        } else {
+            if (tab_state[i]==135){
+                tab_bit[i] = 1;
+            } else if (tab_state[i]==45){
+                tab_bit[i]= 0; 
+            } else {
+                tab_bit[i]=1; //arbitraire
+            }
         } 
     } 
 } 
@@ -99,26 +120,31 @@ int main (int argc, char **argv)
 		}
 	}
 
-    if (alice == -1 || nb_message < 0 ) {
-        printf("s\n");
+    if (alice == -1 || (alice==1 && nb_message < 0 )) {
         printf("usage: cmd [-a|-b][-n ##]\n");
         exit(1) ;
     }
 
-    unsigned short tab_bit[nb_message];
-    unsigned char tab_bases[nb_message];
-    unsigned int tab_state[nb_message];
-
     if (alice) {
+        unsigned short tab_bit[nb_message];
+        unsigned char tab_bases[nb_message];
+        unsigned int tab_state[nb_message];
         generate_rand_bit(tab_bit);
         generate_rand_bases(tab_bases);
         generate_states(tab_bit, tab_bases, tab_state);
         for (int i=0; i < nb_message; i++){
             printf("%d bit :%d, base : %c, state :%d\n", i, tab_bit[i], tab_bases[i], tab_state[i]);
         }
-        //TO DO 
+        send_data(tab_state, nb_message);
     } else {
+        unsigned int tab_state[1000];
+        receive_data(tab_state, &nb_message);
+        unsigned short tab_bit[nb_message];
+        unsigned char tab_bases[nb_message];
         generate_rand_bases(tab_bases);
-        //TO DO 
+        decode_data(tab_state,tab_bases,tab_bit);
+        for (int i=0; i < nb_message; i++){
+            printf("%d state :%d, base : %c, bit :%d\n", i, tab_state[i], tab_bases[i], tab_bit[i]);
+        }
     } 
 }
