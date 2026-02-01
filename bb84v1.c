@@ -20,7 +20,7 @@ données du réseau */
 #include <time.h> 
 #include "TCP_channel.c"
 
-int nb_message =-1 ;
+int nb_message = 100 ;
 
 void generate_rand_bit(unsigned short * tab){
     for (int i = 0;i<nb_message;i++){
@@ -80,6 +80,19 @@ void decode_data(unsigned int * tab_state, unsigned char * tab_bases, unsigned s
     } 
 } 
 
+void find_key(unsigned char * tab_bases_1, int len1, unsigned char * tab_bases_2, int len2,unsigned short * tab_bit, unsigned short * key, int * key_length) {
+    int k = 0;
+    if (len1==len2){
+        for (int i = 0; i<len1 ;i++){
+            if (tab_bases_1[i]==tab_bases_2[i]){
+                key[k]=tab_bit[i];
+                k++;
+            }
+        }
+    }
+    *key_length = k;
+}
+
 /// @brief 
 /// @param argc 
 /// @param argv 
@@ -123,28 +136,88 @@ int main (int argc, char **argv)
     if (alice == -1 || (alice==1 && nb_message < 0 )) {
         printf("usage: cmd [-a|-b][-n ##]\n");
         exit(1) ;
-    }
+    }   
 
     if (alice) {
-        unsigned short tab_bit[nb_message];
-        unsigned char tab_bases[nb_message];
-        unsigned int tab_state[nb_message];
-        generate_rand_bit(tab_bit);
-        generate_rand_bases(tab_bases);
-        generate_states(tab_bit, tab_bases, tab_state);
+        unsigned short tab_bit_alice[nb_message];
+        unsigned int tab_state_alice[nb_message];
+        unsigned char tab_base_alice[nb_message];       
+        generate_rand_bit(tab_bit_alice);
+        generate_rand_bases(tab_base_alice);
+        generate_states(tab_bit_alice, tab_base_alice, tab_state_alice);
+        printf("ALICE |\n");
+        printf("états : ");
         for (int i=0; i < nb_message; i++){
-            printf("%d bit :%d, base : %c, state :%d\n", i, tab_bit[i], tab_bases[i], tab_state[i]);
+            printf("%d-", tab_state_alice[i]);
         }
-        send_data(tab_state, nb_message);
+        printf("\n");
+        printf("bases : ");
+        for (int i=0; i < nb_message; i++){
+            printf("%c", tab_base_alice[i]);
+        }
+        printf("\n");
+        printf("bits : ");
+        for (int i=0; i < nb_message; i++){
+            printf("%d", tab_bit_alice[i]);
+        }
+        printf("\n");
+        printf("-------------------------------------------\n");
+
+        connect_alice();
+        send_data(tab_state_alice, nb_message);
+        unsigned char tab_base_bob[nb_message];
+        receive_base(tab_base_bob, &nb_message);
+        send_base(tab_base_alice,nb_message);
+        unsigned short key[nb_message];
+        int key_length;
+        find_key(tab_base_alice,sizeof(tab_base_alice),tab_base_bob,sizeof(tab_base_bob),tab_bit_alice,key,&key_length);
+        printf("KEY : ");
+        for (int i=0;i<key_length;i++){
+            printf("%d",key[i]);
+        }
+        printf("\n");
+        printf("-------------------------------------------\n");
+        wait_for_bob();
     } else {
-        unsigned int tab_state[1000];
-        receive_data(tab_state, &nb_message);
-        unsigned short tab_bit[nb_message];
-        unsigned char tab_bases[nb_message];
-        generate_rand_bases(tab_bases);
-        decode_data(tab_state,tab_bases,tab_bit);
+        //recoit les états
+        listen_bob();
+        unsigned int tab_state_bob[nb_message];
+        receive_data(tab_state_bob, &nb_message);
+        //génère ses bases
+        unsigned char tab_base_bob[nb_message];
+        generate_rand_bases(tab_base_bob);
+        //decode le message
+        unsigned short tab_bit_bob[nb_message];
+        decode_data(tab_state_bob,tab_base_bob,tab_bit_bob);
+        printf("BOB |\n");
+        printf("états : ");
         for (int i=0; i < nb_message; i++){
-            printf("%d state :%d, base : %c, bit :%d\n", i, tab_state[i], tab_bases[i], tab_bit[i]);
+            printf("%d-", tab_state_bob[i]);
         }
+        printf("\n");
+        printf("bases : ");
+        for (int i=0; i < nb_message; i++){
+            printf("%c", tab_base_bob[i]);
+        }
+        printf("\n");
+        printf("bits : ");
+        for (int i=0; i < nb_message; i++){
+            printf("%d", tab_bit_bob[i]);
+        }
+        printf("\n");
+        //renvoie ses bases
+        send_base(tab_base_bob, nb_message);
+        unsigned char tab_base_alice[nb_message];
+        receive_base(tab_base_alice, &nb_message);
+        unsigned short key[nb_message];
+        int key_length;
+        find_key(tab_base_alice,sizeof(tab_base_alice),tab_base_bob,sizeof(tab_base_bob),tab_bit_bob,key,&key_length);
+        printf("KEY : ");
+        for (int i=0;i<key_length;i++){
+            printf("%d",key[i]);
+        }
+        printf("\n");
+        printf("-------------------------------------------\n");
+        disconnect_bob();
     } 
 }
