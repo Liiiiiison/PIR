@@ -145,29 +145,15 @@ int main (int argc, char **argv)
         generate_rand_bit(tab_bit_alice);
         generate_rand_bases(tab_base_alice);
         generate_states(tab_bit_alice, tab_base_alice, tab_state_alice);
-        printf("ALICE |\n");
-        printf("états : ");
-        for (int i=0; i < nb_message; i++){
-            printf("%d-", tab_state_alice[i]);
-        }
-        printf("\n");
-        printf("bases : ");
-        for (int i=0; i < nb_message; i++){
-            printf("%c", tab_base_alice[i]);
-        }
-        printf("\n");
-        printf("bits : ");
-        for (int i=0; i < nb_message; i++){
-            printf("%d", tab_bit_alice[i]);
-        }
-        printf("\n");
-        printf("-------------------------------------------\n");
 
+        //COMM
         connect_alice();
         send_data(tab_state_alice, nb_message);
         unsigned char tab_base_bob[nb_message];
         receive_base(tab_base_bob, &nb_message);
         send_base(tab_base_alice,nb_message);
+        //FIN DE COMM
+        
         unsigned short key[nb_message];
         int key_length;
         find_key(tab_base_alice,sizeof(tab_base_alice),tab_base_bob,sizeof(tab_base_bob),tab_bit_alice,key,&key_length);
@@ -179,6 +165,8 @@ int main (int argc, char **argv)
         printf("-------------------------------------------\n");
         wait_for_bob();
     } else {
+
+        //COMM
         //recoit les états
         listen_bob();
         unsigned int tab_state_bob[nb_message];
@@ -186,31 +174,17 @@ int main (int argc, char **argv)
         //génère ses bases
         unsigned char tab_base_bob[nb_message];
         generate_rand_bases(tab_base_bob);
-        //decode le message
-        unsigned short tab_bit_bob[nb_message];
-        decode_data(tab_state_bob,tab_base_bob,tab_bit_bob);
-        printf("BOB |\n");
-        printf("états : ");
-        for (int i=0; i < nb_message; i++){
-            printf("%d-", tab_state_bob[i]);
-        }
-        printf("\n");
-        printf("bases : ");
-        for (int i=0; i < nb_message; i++){
-            printf("%c", tab_base_bob[i]);
-        }
-        printf("\n");
-        printf("bits : ");
-        for (int i=0; i < nb_message; i++){
-            printf("%d", tab_bit_bob[i]);
-        }
-        printf("\n");
-        //renvoie ses bases
+        //envoie ses bases et recoit celles d'alice
         send_base(tab_base_bob, nb_message);
         unsigned char tab_base_alice[nb_message];
         receive_base(tab_base_alice, &nb_message);
+        //FIN COMM
+
         unsigned short key[nb_message];
         int key_length;
+        //decode le message
+        unsigned short tab_bit_bob[nb_message];
+        decode_data(tab_state_bob,tab_base_bob,tab_bit_bob);
         find_key(tab_base_alice,sizeof(tab_base_alice),tab_base_bob,sizeof(tab_base_bob),tab_bit_bob,key,&key_length);
         printf("KEY : ");
         for (int i=0;i<key_length;i++){
