@@ -1,16 +1,16 @@
 #include "t_test.h"
 #include <random>
 #include <algorithm>
+#include <iostream>
+
+
+extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 #include <system.h>
 #include <vc_vector.h>
 #include <system_tracing.h>
-
-
-extern "C" {
-
-uint32_t maps_t_test_example()
+int main()
 {        
 
 
@@ -54,14 +54,12 @@ uint32_t maps_t_test_example()
 
 		// here, we are supposed to use a and b as input to get a trace of our algorithm
 
-		// how tf do we pass arguments to firmware ?
-		// i don't find any system_set_register and system_get_register
-
 		system_init_without_cache(rom_size, ram_size, ram_start_addr);
 	
 		system_init_tracing();
 		system_tracing_enable(SYSTEM_TRACING_POWER_RISCV_ISA);
 		
+		// x10 and x11
 		system_set_register(10,key1_fixed);
 		system_set_register(11,key2_fixed);
 
@@ -95,25 +93,60 @@ uint32_t maps_t_test_example()
 		}
 		ttest_ptr->update1(trace);
 
+		system_reset();
+		system_tracing_free_vectors();
 
 
-
-
-
+		
 
 		/// random input keys ///
 
-		uint32_t key1 = rnd_gen_uint32();
-		uint32_t key2 = rnd_gen_uint32();
+		uint32_t key1_random = rnd_gen_uint32();
+		uint32_t key2_random = rnd_gen_uint32();
 		
 		// here, we are supposed to use a and b as input to get a trace of our algorithm
+		system_init_without_cache(rom_size, ram_size, ram_start_addr);
+	
+		system_init_tracing();
+		system_tracing_enable(SYSTEM_TRACING_POWER_RISCV_ISA);
+		
+		system_set_register(10,key1_random);
+		system_set_register(11,key2_random);
 
+		system_load_firmware(filename);
+		system_run();
 
+		// simulator output : C-style trace vector //
 
-		// clear caches and pipeline between loops
-		cpu.reset();
+		riscv_leakage_trace = system_tracing_get_vector(SYSTEM_TRACING_POWER_RISCV_ISA);
+		
+
+		printf("size of power leakage vector : %d \n",vc_vector_count(riscv_leakage_trace));
+		// convert c vector simulator output to c++ std::vector trace //
+		void*  vc_index = vc_vector_begin(riscv_leakage_trace);
+
+		//void*  k = vc_vector_begin(riscv_bit_0_leakage_trace);
+		for (;
+			(vc_index != vc_vector_end(riscv_leakage_trace)); 
+			vc_index = vc_vector_next(riscv_leakage_trace,vc_index)
+		){
+			trace.push_back(*(uint16_t*)i);
+		}
+		
+
+		/** capturing samples and storing them into a vector called 'trace' **/
+		if (measure_idx == 0)
+		{
+			ttest_ptr = new Ttest(trace.size());
+		}
+
 		/** capturing samples and storing them into a vector called 'trace' **/
 		ttest_ptr->update2(trace);
+
+
+		system_reset();
+		system_tracing_free_vectors();
+
 
 
 	}
@@ -132,7 +165,7 @@ uint32_t maps_t_test_example()
 	if(t_fail.size() >= 1){
 		/** leak at some samples **/
 
-		std::cout<<"LEAK !!!!!!! sample => "<<i<<std::endl;
+		std::cout<<"LEAK !!!!!!! "<<std::endl;
 	}else{
 		/** no leak **/
 	}
