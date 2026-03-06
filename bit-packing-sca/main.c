@@ -19,7 +19,6 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <system.h>
 #include <vc_vector.h>
 #include <system_tracing.h>
 
@@ -34,6 +33,11 @@ int main(int argc, char* argv[]) {
 	uint32_t cache_bank_partitions = 8;
 	uint32_t ram_bus_size          = 64;
 	char* filename = "firmware/firmware.bin";
+
+
+	unsigned long key1_fixed = 0b1001'0110'1001'0000'0000'0011'0110'0000;// 0100 0000 0010 0000 0011 0000 0100 0000;
+	unsigned long key2_fixed = 0b1011'0010'1001'0000'0000'0011'0010'0000;//0100 0000 0010 0000 0001 0001 0100 0000; 
+
 	
 	system_init_without_cache(rom_size, ram_size, ram_start_addr);
 	
@@ -42,7 +46,11 @@ int main(int argc, char* argv[]) {
 	system_tracing_enable(SYSTEM_TRACING_POWER_RISCV_ISA);
 	//system_tracing_enable(SYSTEM_TRACING_POWER_RISCV_REGISTER_FILE_BIT_0);
 	
-	//system_set_register(10,0x12345678);
+
+	// put args in x10 and x11 registers before loading firmware
+	system_set_register(10,key1_fixed);
+	system_set_register(11,key2_fixed);
+
 	system_load_firmware(filename);
 	system_run();
 

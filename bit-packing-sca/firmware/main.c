@@ -4,12 +4,18 @@
 #include "riscv_firmware_riscv_sim_cmd.h"
 
 
-unsigned long k1 = 0b1001'0110'1001'0000'0000'0011'0110'0000;// 0100 0000 0010 0000 0011 0000 0100 0000;
-unsigned long k2 = 0b1011'0010'1001'0000'0000'0011'0010'0000;//0100 0000 0010 0000 0001 0001 0100 0000; 
-
 
 
 int main() {
+	unsigned long k1 = 0; // = 0b1001'0110'1001'0000'0000'0011'0110'0000;// 0100 0000 0010 0000 0011 0000 0100 0000;
+	unsigned long k2 = 0; // = 0b1011'0010'1001'0000'0000'0011'0010'0000;//0100 0000 0010 0000 0001 0001 0100 0000; 
+
+
+	// load les clés données au setup du simulateur grâce à system_set_register
+	// petit trick pour bouger la valeur en dehors de x10 on fait un add immediat de 0
+	asm("addi %0,x10,0" : "=r" (k1));
+	asm("addi %0,x11,0" : "=r" (k2));
+
 	riscv_sim_tracing_on
 
 	char bit;
