@@ -10,6 +10,7 @@ extern "C" {
 #include <system.h>
 #include <vc_vector.h>
 #include <system_tracing.h>
+
 int main()
 {        
 
@@ -92,9 +93,11 @@ int main()
 			ttest_ptr = new Ttest(trace.size());
 		}
 		ttest_ptr->update1(trace);
+		trace.clear();
 
 		system_reset();
 		system_tracing_free_vectors();
+
 
 
 		
@@ -142,10 +145,12 @@ int main()
 
 		/** capturing samples and storing them into a vector called 'trace' **/
 		ttest_ptr->update2(trace);
+		trace.clear();
 
 
 		system_reset();
 		system_tracing_free_vectors();
+
 
 
 
