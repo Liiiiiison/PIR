@@ -13,9 +13,9 @@ int main() {
 
 	// load les clés données au setup du simulateur grâce à system_set_register
 	// petit trick pour bouger la valeur en dehors de x10 on fait un add immediat de 0
-	asm("addi %0,x10,0" : "=r" (k1));
-	asm("addi %0,x11,0" : "=r" (k2));
-
+	asm("addi %0,x5,0" : "=r" (k1));
+	asm("addi %0,x6,0" : "=r" (k2));
+		 // remplacer par x5 et x6 car ceux la sont pour ole passage d'arguments ( t0 et t1 vs a0 et a1)
 	riscv_sim_tracing_on
 
 	char bit;

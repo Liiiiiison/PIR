@@ -32,6 +32,11 @@ int main()
 	std::vector<unsigned int> trace;
 	const uint32_t key1_fixed = 0b1001'0110'1001'0000'0000'0011'0110'0000;
 	const uint32_t key2_fixed = 0b1011'0010'1001'0000'0000'0011'0010'0000;
+	system_init_without_cache(rom_size, ram_size, ram_start_addr);
+
+	system_init_tracing();
+	system_tracing_enable(SYSTEM_TRACING_POWER_RISCV_ISA);
+	system_load_firmware(filename);
 
 
 	// Capturing fixed and random input traces //
@@ -50,21 +55,10 @@ int main()
 		// b[0] = b[1] ^ rnd_gen_uint32();
 		// r = rnd_gen_uint32();
 
-
-
-
-		// here, we are supposed to use a and b as input to get a trace of our algorithm
-
-		system_init_without_cache(rom_size, ram_size, ram_start_addr);
-	
-		system_init_tracing();
-		system_tracing_enable(SYSTEM_TRACING_POWER_RISCV_ISA);
-		
 		// x10 and x11
-		system_set_register(10,key1_fixed);
-		system_set_register(11,key2_fixed);
-
-		system_load_firmware(filename);
+		system_set_register(5,key1_fixed);
+		system_set_register(6,key2_fixed);
+		// tout faire sur la même instance de simulateur
 		system_run();
 
 		// simulator output : C-style trace vector //
@@ -108,13 +102,9 @@ int main()
 		uint32_t key2_random = rnd_gen_uint32();
 		
 		// here, we are supposed to use a and b as input to get a trace of our algorithm
-		system_init_without_cache(rom_size, ram_size, ram_start_addr);
-	
-		system_init_tracing();
-		system_tracing_enable(SYSTEM_TRACING_POWER_RISCV_ISA);
-		
-		system_set_register(10,key1_random);
-		system_set_register(11,key2_random);
+
+		system_set_register(5,key1_random);
+		system_set_register(6,key2_random);
 
 		system_load_firmware(filename);
 		system_run();
@@ -133,7 +123,7 @@ int main()
 			(vc_index != vc_vector_end(riscv_leakage_trace)); 
 			vc_index = vc_vector_next(riscv_leakage_trace,vc_index)
 		){
-			trace.push_back(*(uint16_t*)i);
+			trace.push_back(*(uint16_t*)vc_index);
 		}
 		
 
@@ -182,3 +172,4 @@ int main()
 }
 
 }
+ 
