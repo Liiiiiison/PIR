@@ -1,0 +1,56 @@
+library IEEE;
+use IEEE.std_logic_1164.all;
+use IEEE.numeric_std.all;
+
+entity pext_secure is
+    port(
+        Clock   : in  std_logic;
+        reset   : in  std_logic;
+        base_1  : in  std_logic_vector(31 downto 0);
+        base_2  : in  std_logic_vector(31 downto 0);
+        key     : out std_logic_vector(31 downto 0)
+    );
+end entity;
+
+architecture beh of pext_secure is
+    signal i : integer range 0 to 31 := 0;
+    signal j : integer range 0 to 31 := 0;
+    signal key_reg : std_logic_vector(31 downto 0) := (others => '0');
+begin
+
+    process(Clock, reset)
+        variable bit1_eq_true : std_logic;
+        variable bit1_eq_false : std_logic;
+        variable bit2_eq_true : std_logic;
+        variable bit2_eq_false : std_logic;
+    begin
+        if reset = '1' then
+            i <= 0;
+            j <= 0;
+            key_reg <= (others => '0');
+        elsif rising_edge(Clock) then
+            -- Toujours calculer les deux bits, même si on ne les utilise pas
+            bit1_eq_true := '1' when (base_1(i) = base_2(i)) else '0';
+            bit1_eq_false := '0' when (base_1(i) = base_2(i)) else '1';
+            bit2_eq_true := '1' when (base_1(i+1) = base_2(i+1)) else '0';
+            bit2_eq_false := '0' when (base_1(i+1) = base_2(i+1)) else '1';
+
+            -- Écriture non conditionnelle (masquage)
+            key_reg(j)   <= bit1_eq_true;
+            key_reg(j+1) <= bit2_eq_true;
+
+            -- Mise à jour des compteurs de manière constante
+            if (i < 30) then  -- 30 = 32-2 (pour éviter les débordements)
+                i <= i + 2;
+                j <= j + 2;
+            else
+                i <= 0;
+                j <= 0;
+            end if;
+        end if;
+    end process;
+
+    -- Sortie enregistrée pour éviter les fuites
+    key <= key_reg;
+
+end architecture;
