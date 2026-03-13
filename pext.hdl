@@ -16,19 +16,20 @@ architecture beh of pext_secure is
     signal i : integer range 0 to 31 := 0;
     signal j : integer range 0 to 31 := 0;
     signal key_reg : std_logic_vector(31 downto 0) := (others => '0');
+    signal bit1_eq_true : std_logic;
+    signal bit1_eq_false : std_logic;
+    signal bit2_eq_true : std_logic;
+    signal bit2_eq_false : std_logic;
 begin
 
-    process(Clock, reset)
-        variable bit1_eq_true : std_logic;
-        variable bit1_eq_false : std_logic;
-        variable bit2_eq_true : std_logic;
-        variable bit2_eq_false : std_logic;
+    process
+        
     begin
         if reset = '1' then
             i <= 0;
             j <= 0;
             key_reg <= (others => '0');
-        elsif rising_edge(Clock) then
+        elsif Clock'event=1 and Clock=1 then
             -- Toujours calculer les deux bits, même si on ne les utilise pas
             bit1_eq_true := '1' when (base_1(i) = base_2(i)) else '0';
             bit1_eq_false := '0' when (base_1(i) = base_2(i)) else '1';
