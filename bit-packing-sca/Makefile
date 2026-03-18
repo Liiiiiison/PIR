@@ -20,7 +20,7 @@ x64_256_OBJECTS = $(patsubst %.c, %_256.o, $(wildcard *.c))
 all: clean no-simd
 
 no-simd: clean imprise-128
-	make -C firmware/ TOOLCHAIN_PATH=/opt/riscv/bin/ RISCV_CFLAGS="-march=rv32im_zbb_zbs -fno-builtin" 
+	make -C firmware/ TOOLCHAIN_PATH=/opt/riscv/bin/ RISCV_CFLAGS="-march=rv32im_zbb_zbs_zicsr -fno-builtin" 
 	
 imprise-128: $(x64_128_OBJECTS)
 	$(x64_GCC) $(CFLAGS) $(x64_128_OBJECTS) -o $(x64_TARGET) -lm -limprise

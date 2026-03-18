@@ -48,8 +48,10 @@ int main(int argc, char* argv[]) {
 	
 
 	// put args in x10 and x11 registers before loading firmware
-	system_set_register(10,key1_fixed);
-	system_set_register(11,key2_fixed);
+	system_set_register(5,key1_fixed);
+	system_set_register(6,key2_fixed);
+
+
 
 	system_load_firmware(filename);
 	system_run();

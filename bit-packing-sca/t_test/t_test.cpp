@@ -122,3 +122,10 @@ std::vector<double> Ttest::t_test(void)
 	}
 	return t;
 }
+
+
+/*
+[LEAK] at index(s) 0;2;3;5;6;7;9;10;11;13;14;15;17;18;19;21;22;23;25;26;27;29;31;40;42;43;44;46;47;48;50;51;52;54;55;56;58;59;60;62;63;64;66;67;71;72;73;74;75;76;78;79;80;82;83;84;86;87;88;90;91;92;94;95;96;97;98;99;100;102;103;104;106;107;
+( there is a loop so one single/two instruction(s) could be the origin of this)
+ I see at least two distinct instructions as sometimes we have +2 between indexes and sometimes +1
+*/

@@ -15,7 +15,29 @@ int main() {
 	// petit trick pour bouger la valeur en dehors de x10 on fait un add immediat de 0
 	asm("addi %0,x5,0" : "=r" (k1));
 	asm("addi %0,x6,0" : "=r" (k2));
-		 // remplacer par x5 et x6 car ceux la sont pour ole passage d'arguments ( t0 et t1 vs a0 et a1)
+
+	/*
+	38368
+	10090
+	val: 10090 (0x0000276a)
+	val: 10090 (0x0000276a)
+	POURQUOI LA DERNIERE VALEUR EST SUR LES 2 VARIABLES ???
+
+	wtf, le truc n'est appelé qu'une fois ???
+	*/
+
+
+
+	/*asm("csrrs %0, 0x015, x0" : "=r" (k1));
+	riscv_sim_print_int(k1);
+	
+	asm("csrrs %0, 0x015, x0" : "=r" (k2));
+	riscv_sim_print_int(k2);*/
+
+
+
+
+	// remplacer par x5 et x6 car ceux la sont pour ole passage d'arguments ( t0 et t1 vs a0 et a1)
 	riscv_sim_tracing_on
 
 	char bit;
@@ -26,6 +48,11 @@ int main() {
     unsigned int nb_zeros;
 
 	unsigned int absolute_pos = 0;
+
+	
+
+
+
 
 	// asm ( "assembly code" : output operands : input operands : clobbered registers );
 
@@ -43,9 +70,18 @@ int main() {
 
 
     	asm("bext %0,%1,%2" : "=r" (bit): "r" (k1) , "r" (absolute_pos));
+
+
+		//asm("csrrs %0, 0x015, x0" : "=r" (k2));
+
+
 		absolute_pos += 1; // add 1 so we actually have the real bit index
 
         final_k |= bit << pos; // places the bit value at the next position in final_k (packing)
+
+		// mask with upper 16 bits random value
+		// asm("lui %0,%1" : "=r" (final_k) :"r" ())
+
         k3 = k3 >> (nb_zeros + 1); // shifts k3 so the last lowest weight bit 1 is gone
         pos += 1;
 
@@ -53,6 +89,8 @@ int main() {
 		/*riscv_sim_print_str("generation key bit number :")
 		riscv_sim_print_int(pos)*/
 		//riscv_sim_print_str("value = ")
+
+
 
 
 		//riscv_sim_print_int(bit)

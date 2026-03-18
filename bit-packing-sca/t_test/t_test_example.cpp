@@ -2,6 +2,7 @@
 #include <random>
 #include <algorithm>
 #include <iostream>
+#include <sstream>
 
 
 extern "C" {
@@ -29,7 +30,9 @@ int main()
 	Ttest *ttest_ptr = nullptr;
 	std::random_device random_dev;
 	std::mt19937 rnd_gen_uint32(random_dev());
-	std::vector<unsigned int> trace;
+	std::vector<unsigned int> trace1;
+	std::vector<unsigned int> trace2;
+
 	const uint32_t key1_fixed = 0b1001'0110'1001'0000'0000'0011'0110'0000;
 	const uint32_t key2_fixed = 0b1011'0010'1001'0000'0000'0011'0010'0000;
 	system_init_without_cache(rom_size, ram_size, ram_start_addr);
@@ -77,17 +80,17 @@ int main()
 			(i != vc_vector_end(riscv_leakage_trace)); 
 			i = vc_vector_next(riscv_leakage_trace,i)
 		){
-			trace.push_back(*(uint16_t*)i);
+			trace1.push_back(*(uint16_t*)i);
 		}
 		
 
 		/** capturing samples and storing them into a vector called 'trace' **/
 		if (measure_idx == 0)
 		{
-			ttest_ptr = new Ttest(trace.size());
+			ttest_ptr = new Ttest(trace1.size());
 		}
-		ttest_ptr->update1(trace);
-		trace.clear();
+		ttest_ptr->update1(trace1);
+		trace1.clear();
 
 		system_reset();
 		system_tracing_free_vectors();
@@ -123,19 +126,12 @@ int main()
 			(vc_index != vc_vector_end(riscv_leakage_trace)); 
 			vc_index = vc_vector_next(riscv_leakage_trace,vc_index)
 		){
-			trace.push_back(*(uint16_t*)vc_index);
+			trace2.push_back(*(uint16_t*)vc_index);
 		}
 		
-
 		/** capturing samples and storing them into a vector called 'trace' **/
-		if (measure_idx == 0)
-		{
-			ttest_ptr = new Ttest(trace.size());
-		}
-
-		/** capturing samples and storing them into a vector called 'trace' **/
-		ttest_ptr->update2(trace);
-		trace.clear();
+		ttest_ptr->update2(trace2);
+		trace2.clear();
 
 
 		system_reset();
@@ -151,16 +147,22 @@ int main()
 
 
 
-
+	// t.size() = sample size as we just apply welch's formula on the sample set for each index of sample
+	// so if we ad NOP
+	std::stringstream ss;
 	for(size_t i = 0; i < t.size(); ++i)
 	{
-		if((t[i] > 4.5) || (t[i] < -4.5)) t_fail.push_back(i);
+		if((t[i] > 4.5) || (t[i] < -4.5)){
+			t_fail.push_back(i);
+			ss <<i;// only for printing purposes
+			ss<<';';
+		} 
 	}
 	t_fail.erase( std::unique( t_fail.begin(), t_fail.end() ), t_fail.end() );
 	if(t_fail.size() >= 1){
 		/** leak at some samples **/
 
-		std::cout<<"LEAK !!!!!!! "<<std::endl;
+		std::cout<<"[LEAK] at index(s) "<<ss.str()<<std::endl;
 	}else{
 		/** no leak **/
 	}
