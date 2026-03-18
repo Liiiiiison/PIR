@@ -58,7 +58,7 @@ int main()
 		// b[0] = b[1] ^ rnd_gen_uint32();
 		// r = rnd_gen_uint32();
 
-		// x10 and x11
+		// x5 and x6
 		system_set_register(5,key1_fixed);
 		system_set_register(6,key2_fixed);
 		// tout faire sur la même instance de simulateur

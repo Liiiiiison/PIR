@@ -38,7 +38,6 @@ int main(int argc, char* argv[]) {
 	unsigned long key1_fixed = 0b1001'0110'1001'0000'0000'0011'0110'0000;// 0100 0000 0010 0000 0011 0000 0100 0000;
 	unsigned long key2_fixed = 0b1011'0010'1001'0000'0000'0011'0010'0000;//0100 0000 0010 0000 0001 0001 0100 0000; 
 
-	
 	system_init_without_cache(rom_size, ram_size, ram_start_addr);
 	
 	system_init_tracing();
@@ -48,8 +47,24 @@ int main(int argc, char* argv[]) {
 	
 
 	// put args in x10 and x11 registers before loading firmware
-	system_set_register(5,key1_fixed);
-	system_set_register(6,key2_fixed);
+	srand(time(NULL));
+	uint32_t base_bob_rand = rand();
+	printf("Bob:%x\n",base_bob_rand);
+	uint32_t base_alice_rand = rand();
+	printf("Alice:%x\n",base_alice_rand);
+
+	uint32_t answer = 0;
+	for(int i = 0;i<32;i++){
+		if((base_bob_rand & (1<<i)) == ((base_alice_rand & (1<<i)))){
+			// on fait genre la base de bob c'est aussi la clé lue par bob
+			answer |= ((base_bob_rand & (1<<i))); 
+		}
+	}
+
+	printf("answer:%x\n",answer);
+
+	system_set_register(5,base_bob_rand);
+	system_set_register(6,base_alice_rand);
 
 
 

@@ -1,45 +1,92 @@
-import sys
-import re
 import h5py
 import numpy as np
+import sys
+import re
 
-def parse_and_save():
-    # Regex pour capturer l'adresse (hex) et la valeur (entier)
-    # Format cible : 0x00000010: 23
-    pattern = re.compile(r'(0x[0-9a-fA-F]+):\s*(\d+)')
+class H5TraceManager:
+    def __init__(self, filename):
+        self.filename = filename
+        with h5py.File(self.filename, 'a') as f:
+            if "Traces" not in f:
+                f.create_group("Traces")
+            if "Keys" not in f:
+                f.create_group("Keys")
+    def add_trace(self, key0_str, key1_str, answer_str, leakage_data):
+        with h5py.File(self.filename, 'a') as f:
+            # Synchronisation par index
+            idx = len(f["Traces"].keys())
+           
+            # --- Groupe TRACES ---
+            t_grp = f["Traces"].create_group(f"Trace_{idx}")
+            adr_grp = t_grp.create_group("Adresse")
+            data_np = np.array(leakage_data, dtype=np.float32)
+            adr_grp.create_dataset("data", data=data_np)
+            adr_grp.create_dataset("shape", data=data_np.shape)
+           
+            # --- Groupe KEYS ---
+            # On crée un groupe Key_N qui contient Key0 et Key1
+            k_grp = f["Keys"].create_group(f"Key_{idx}")
+           
+            # Fonction pour extraire l'entier (ex: "-1" depuis "-1 (0xfff...)")
+            def clean_val(s):
+                try: return int(s.split('(')[0].strip(),16)
+                except: return 0
 
-    addresses = []
-    values = []
+            k_grp.create_dataset("Base_Bob", data=np.array([clean_val(key0_str)], dtype=np.int64))
+            k_grp.create_dataset("Base_Alice", data=np.array([clean_val(key1_str)], dtype=np.int64))
+            k_grp.create_dataset("Clé", data=np.array([clean_val(answer_str)], dtype=np.int64))
+           
+            print(f" [+] Index {idx} : Keys({clean_val(key0_str)}, {clean_val(key1_str)}, {clean_val(answer_str)} ) | Trace: {len(leakage_data)} pts")
 
-    print("Lecture du flux Leakage vector... (Ctrl+D pour finaliser)")
+
+def parse_stdin():
+    manager = H5TraceManager("sca_results.h5")
+    current_val = None
+    current_leakage = []
+    in_vector = False
+    key1 = 0
+    key2 = 0
+    answer = 0
+
+    print("Lecture du flux... (Ctrl+C pour arrêter)")
 
     for line in sys.stdin:
-        match = pattern.search(line)
-        if match:
-            # On convertit l'adresse en entier et la valeur en int
-            addr_str, val_str = match.groups()
-            addresses.append(int(addr_str, 16))
-            values.append(int(val_str))
+        line = line.strip()
+       
+        if line.startswith("Bob:"):
+            key1 = line.split(":")[1]
+        if line.startswith("Alice:"):
+            key2 = line.split(":")[1]
+        if line.startswith("answer:"):
+            answer = line.split(":")[1]
 
-    if not values:
-        print("Erreur : Aucune donnée valide trouvée.")
-        return
-
-    # Création du fichier HDF5
-    filename = "leakage_data.h5"
-    with h5py.File(filename, 'w') as f:
-        # Création d'un groupe pour l'organisation
-        grp = f.create_group("Analyse_Vecteur")
-        
-        # On stocke les adresses et les valeurs dans deux datasets distincts
-        grp.create_dataset("adresses", data=np.array(addresses, dtype=np.uint64))
-        grp.create_dataset("valeurs", data=np.array(values, dtype=np.int32))
-        
-        # Ajout de métadonnées
-        f.attrs['format'] = 'Leakage Vector Export'
-        f.attrs['date_creation'] = '2026-03-18'
-
-    print(f"\n✅ Terminé ! {len(values)} entrées sauvegardées dans '{filename}'.")
+        # 1. Capture de la valeur 'val'
+        if line.startswith("val:"):
+            current_val = line.split(":")[1].strip()
+            current_leakage = [] # Reset pour la nouvelle trace
+           
+        # 2. Détection du début du vecteur
+        elif "Leakage vector: [" in line:
+            in_vector = True
+           
+        # 3. Extraction des données (0xAdresse: Valeur)
+        elif in_vector and ":" in line:
+            try:
+                # On prend la partie après les ':'
+                value = float(line.split(":")[1].strip())
+                current_leakage.append(value)
+            except ValueError:
+                pass
+               
+        # 4. Fin du vecteur et enregistrement
+        elif "]" in line and in_vector:
+            if current_leakage:
+                manager.add_trace(key1,key2, answer, current_leakage)
+            in_vector = False
 
 if __name__ == "__main__":
-    parse_and_save()
+    try:
+        parse_stdin()
+    except KeyboardInterrupt:
+        print("\nFin de l'acquisition.")
+
