@@ -1,0 +1,120 @@
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include "riscv_firmware_riscv_sim_cmd.h"
+
+
+
+
+int main() {
+	unsigned long base_bob = 0; // = 0b1001'0110'1001'0000'0000'0011'0110'0000;// 0100 0000 0010 0000 0011 0000 0100 0000;
+	unsigned long base_alice = 0; // = 0b1011'0010'1001'0000'0000'0011'0010'0000;//0100 0000 0010 0000 0001 0001 0100 0000; 
+	unsigned long masked_key = 0;
+	unsigned long mask = 0;
+
+
+	// load les clés données au setup du simulateur grâce à system_set_register
+	// petit trick pour bouger la valeur en dehors de x10 on fait un add immediat de 0
+	asm("addi %0,x5,0" : "=r" (base_bob));
+	asm("addi %0,x6,0" : "=r" (base_alice));
+
+	//check quel registre
+	asm("addi %0,x7,0" : "=r" (masked_key));
+	asm("addi %0,x28,0" : "=r" (mask));
+
+	/*
+	38368
+	10090
+	val: 10090 (0x0000276a)
+	val: 10090 (0x0000276a)
+	POURQUOI LA DERNIERE VALEUR EST SUR LES 2 VARIABLES ???
+
+	wtf, le truc n'est appelé qu'une fois ???
+	*/
+
+
+
+	/*asm("csrrs %0, 0x015, x0" : "=r" (k1));
+	riscv_sim_print_int(k1);
+	
+	asm("csrrs %0, 0x015, x0" : "=r" (k2));
+	riscv_sim_print_int(k2);*/
+
+
+
+
+	// remplacer par x5 et x6 car ceux la sont pour ole passage d'arguments ( t0 et t1 vs a0 et a1)
+	riscv_sim_tracing_on
+
+	char bit_key;
+	char bit_mask;
+    unsigned long final_masked_key = 0;
+	unsigned long final_mask = 0;
+	unsigned long final_key = 0;
+    unsigned long same_base = ~(base_bob ^ base_alice);
+    riscv_sim_print_int(same_base)
+    int pos = 0;
+    unsigned int nb_zeros;
+
+	unsigned int absolute_pos = 0;
+
+	
+
+
+
+
+	// asm ( "assembly code" : output operands : input operands : clobbered registers );
+
+    while(same_base != 0) { // loops until the mask (k3) has no 1 bit
+
+		asm("ctz %0,%1" : "=r" (nb_zeros) : "r" (same_base));
+		/*riscv_sim_print_str("bit match : ")
+		riscv_sim_print_int(nb_zeros)*/
+		
+		
+		// do not increment relative position by 1 more yet
+		// as index starts at 0 in registers
+		// nb_zeros is the right index minus one
+		absolute_pos += nb_zeros; 
+
+
+    	asm("bext %0,%1,%2" : "=r" (bit_key): "r" (masked_key) , "r" (absolute_pos));
+    	asm("bext %0,%1,%2" : "=r" (bit_mask): "r" (mask) , "r" (absolute_pos));
+
+
+		//asm("csrrs %0, 0x015, x0" : "=r" (k2));
+
+
+		absolute_pos += 1; // add 1 so we actually have the real bit index
+
+        final_masked_key |= bit_key << pos; // places the bit value at the next position in final_k (packing)
+		final_mask |= bit_mask << pos;
+
+		// mask with upper 16 bits random value
+		// asm("lui %0,%1" : "=r" (final_k) :"r" ())
+
+        same_base = same_base >> (nb_zeros + 1); // shifts k3 so the last lowest weight bit 1 is gone
+        pos += 1;
+
+
+		/*riscv_sim_print_str("generation key bit number :")
+		riscv_sim_print_int(pos)*/
+		//riscv_sim_print_str("value = ")
+
+
+
+
+		//riscv_sim_print_int(bit)
+
+    }
+
+	//riscv_sim_print_str("[+] generated key :")
+	//riscv_sim_print_int(final_k)
+
+	//riscv_sim_print_str("[+] bit packing terminé\n")
+	//riscv_sim_print_str(test)
+
+	riscv_sim_tracing_off
+
+	return 0;
+}
