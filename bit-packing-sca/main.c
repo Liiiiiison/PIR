@@ -52,20 +52,34 @@ int main(int argc, char* argv[]) {
 	printf("Bob:%x\n",base_bob_rand);
 	uint32_t base_alice_rand = rand();
 	printf("Alice:%x\n",base_alice_rand);
+	uint32_t alice_key_bits_rand = rand();
+	printf("Alice's decoded key bits:%x\n",alice_key_bits_rand);
+
+	uint32_t mask = rand();
+	printf("Alice's mask:%x\n",mask);
+
+
+
 
 	uint32_t answer = 0;
+	uint32_t match_count = 0;
+	uint32_t bit = 0;
 	for(int i = 0;i<32;i++){
+
 		if((base_bob_rand & (1<<i)) == ((base_alice_rand & (1<<i)))){
 			// on fait genre la base de bob c'est aussi la clé lue par bob
-			answer |= ((base_bob_rand & (1<<i))); 
+			bit = (alice_key_bits_rand & (1<<i)) >> i;
+			answer |= (bit<<match_count);
+			match_count++; 
 		}
 	}
 
-	printf("answer:%x\n",answer);
+	printf("answer:%d\n",answer);
 
 	system_set_register(5,base_bob_rand);
 	system_set_register(6,base_alice_rand);
-
+	system_set_register(7,alice_key_bits_rand);
+	system_set_register(8,mask);
 
 
 	system_load_firmware(filename);

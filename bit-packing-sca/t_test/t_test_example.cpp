@@ -33,8 +33,11 @@ int main()
 	std::vector<unsigned int> trace1;
 	std::vector<unsigned int> trace2;
 
-	const uint32_t key1_fixed = 0b1001'0110'1001'0000'0000'0011'0110'0000;
-	const uint32_t key2_fixed = 0b1011'0010'1001'0000'0000'0011'0010'0000;
+	const uint32_t bases1_fixed = 0b1001'0110'1001'0000'0000'0011'0110'0000;
+	const uint32_t bases2_fixed = 0b1011'0010'1001'0000'0000'0011'0010'0000;
+	const uint32_t decoded_bits_fixed = 0xF5e8290D;
+	const uint32_t mask_fixed = rnd_gen_uint32();
+
 	system_init_without_cache(rom_size, ram_size, ram_start_addr);
 
 	system_init_tracing();
@@ -59,8 +62,10 @@ int main()
 		// r = rnd_gen_uint32();
 
 		// x5 and x6
-		system_set_register(5,key1_fixed);
-		system_set_register(6,key2_fixed);
+		system_set_register(5,bases1_fixed);
+		system_set_register(6,bases2_fixed);
+		system_set_register(7,decoded_bits_fixed);
+
 		// tout faire sur la même instance de simulateur
 		system_run();
 
@@ -101,14 +106,18 @@ int main()
 
 		/// random input keys ///
 
-		uint32_t key1_random = rnd_gen_uint32();
-		uint32_t key2_random = rnd_gen_uint32();
-		
+		uint32_t bases1_random = rnd_gen_uint32();
+		uint32_t bases2_random = rnd_gen_uint32();
+		uint32_t decoded_bits_random = rnd_gen_uint32();
+		uint32_t mask_random = rnd_gen_uint32() ;
+
 		// here, we are supposed to use a and b as input to get a trace of our algorithm
 
-		system_set_register(5,key1_random);
-		system_set_register(6,key2_random);
-
+		system_set_register(5,bases1_random);
+		system_set_register(6,bases2_random);
+		system_set_register(7,decoded_bits_random);
+		system_set_register(8,mask_random);
+		
 		system_load_firmware(filename);
 		system_run();
 
