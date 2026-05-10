@@ -6,4 +6,7 @@ Whenever another component changes its state at the same clock cycle that we rec
 
 With fully alternating bases, we can observe the power consumption of the activation/deactivation of de Hadamard's gate is occulting the power consumption of any detector's click, making their power signature undiscernable.
 
-_As our simulation was constently switching base at each observation cycle, it does not reflect a real world scenario where observation base stays the same at least twice in a row, allowing recovery of at least 50% of the key on a single trace without any further analysis_
+_As our simulation was constently switching base at each observation cycle, it does not reflect a real world scenario where observation base stays the same at least twice in a row, allowing an attempt of recovery on at least 50% of the key on a single trace without any further analysis_
+
+
+This specific case led us to think that polluting power traces with a clocked power consuming hardware could shadow the clicks of the filters. Opening the door for a potential localised side channel countermeasure for the hardware controler.
