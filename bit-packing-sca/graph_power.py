@@ -109,36 +109,37 @@ gdb_dump_no_mask_no_annotation = """
    0x00000028 <+20>:    xnor    a2,a2,a5
    0x0000002c <+24>:    beqz    a2,0xa0 <main+140>
    0x00000030 <+28>:    li      a1,0
-   0x00000034 <+32>:    li      a4,0
 --Type <RET> for more, q to quit, c to continue without paging--
+   0x00000034 <+32>:    li      a4,0
    0x00000038 <+36>:    li      a6,0
    0x0000003c <+40>:    ctz     a3,a2
    0x00000040 <+44>:    add     a4,a3,a4
    0x00000044 <+48>:    bext    a5,a0,a4
-   0x00000048 <+52>:    zext.b  a5,a5 
-   0x0000004c <+56>:    addi    a3,a3,1 
-   0x00000050 <+60>:    sll     a5,a5,a1 
-   0x00000054 <+64>:    srl     a2,a2,a3 
-   0x00000058 <+68>:    or      a6,a6,a5 
-   0x0000005c <+72>:    addi    a4,a4,1
+   0x00000048 <+52>:    zext.b  a5,a5
+   0x0000004c <+56>:    addi    a3,a3,1
+   0x00000050 <+60>:    sll     a5,a5,a1
+   0x00000054 <+64>:    srl     a2,a2,a3
 --Type <RET> for more, q to quit, c to continue without paging--
-   0x00000060 <+76>:    addi    a1,a1,1  
+   0x00000058 <+68>:    or      a6,a6,a5
+   0x0000005c <+72>:    addi    a4,a4,1
+   0x00000060 <+76>:    addi    a1,a1,1
    0x00000064 <+80>:    bnez    a2,0x3c <main+40>
    0x00000068 <+84>:    .insn   4, 0x0e00206b
    0x0000006c <+88>:    lui     a5,0x0
    0x00000070 <+92>:    mv      a5,a5
    0x00000074 <+96>:    sw      a5,8(sp)
    0x00000078 <+100>:   lw      a5,8(sp)
+--Type <RET> for more, q to quit, c to continue without paging--
    0x0000007c <+104>:   add     a0,a5,zero
    0x00000080 <+108>:   .insn   4, 0x0c00056b
    0x00000084 <+112>:   sw      a6,12(sp)
---Type <RET> for more, q to quit, c to continue without paging--
    0x00000088 <+116>:   lw      a5,12(sp)
    0x0000008c <+120>:   add     a0,a5,zero
    0x00000090 <+124>:   .insn   4, 0x0a00056b
    0x00000094 <+128>:   li      a0,0
    0x00000098 <+132>:   addi    sp,sp,16
    0x0000009c <+136>:   ret
+--Type <RET> for more, q to quit, c to continue without paging--
    0x000000a0 <+140>:   li      a6,0
    0x000000a4 <+144>:   j       0x68 <main+84>
 End of assembler dump.
@@ -234,14 +235,14 @@ def plot_correlated_trace(raw_trace,asm_mapping,key_bits):
     for i, instr in enumerate(labels):
         #print(f"instr = {instr}")
 
-        opcode = instr.split()[0] if instr.split() else ""
+      opcode = instr.split()[0] if instr.split() else ""
 
-
-        if opcode in ["bext"]:
-            ax.annotate(instr+f"    b={key_bits[key_bit_index]}", (i, powers[i]), xytext=(0, 10), 
-                            textcoords='offset points', rotation=90, 
-                            fontsize=12, verticalalignment='bottom', alpha=0.8)
-            key_bit_index += 1
+      if opcode in ["bext"]:
+         ax.annotate(instr+f"    b={key_bits[key_bit_index]}", (i, powers[i]), xytext=(0, 10), 
+                           textcoords='offset points', rotation=90, 
+                           fontsize=12, verticalalignment='bottom', alpha=0.8)
+      
+         key_bit_index += 1
 
 
     # Mise en évidence de la fin (hors boucle)
@@ -260,7 +261,9 @@ def plot_correlated_trace(raw_trace,asm_mapping,key_bits):
     ax.grid(True, which='both', linestyle=':', alpha=0.5)
     ax.legend()
     
+   
     plt.tight_layout()
+    plt.savefig("graph_power_instr.png")
     plt.show()
 
 
@@ -268,14 +271,13 @@ if __name__ == "__main__":
 
 
     """
-Bob:451a2192
-Alice:278f2835
-Alice's decoded key bits:7b42ca34
-Alice's mask:4c189cdd
-answer:111498
+Bob:72948c29
+Alice:717156a8
+Alice's decoded key bits:6b91b217
+Alice's mask:52737868
+answer:1a90b = 0001 1010 1001 0000 1011
 [+] generated key :
-val: 111498 (0x0001b38a) = 0b00... 0001 1011 0011 1000 1010
-
+val: 108811 (0x0001a90b)
 size of power leakage vector : 203 
     """
 
@@ -283,7 +285,8 @@ size of power leakage vector : 203
         trace_raw = f.read()
         #test_parser()
         asm_mapping = parse_gdb_assembly(gdb_dump_no_mask_no_annotation)
-        key_bits = list("011011001110001010")
+        #key_bits = list("011011001110001010")
+        key_bits = list("00011010100100001011")
         key_bits.reverse()
         print(key_bits)
         plot_correlated_trace(trace_raw,asm_mapping,key_bits)

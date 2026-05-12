@@ -74,7 +74,7 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
-	printf("answer:%d\n",answer);
+	printf("answer:%x\n",answer);
 
 	system_set_register(5,base_bob_rand);
 	system_set_register(6,base_alice_rand);
